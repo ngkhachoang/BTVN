@@ -2,8 +2,6 @@
 package com.example.btvn_nkh.ui
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.btvn_nkh.ui.components.PhotoPicker
 
 @Composable
 fun MainScreen(
@@ -48,9 +47,7 @@ fun MainScreen(
     val tabs by viewModel.tabs.collectAsState()
     val (selectedTabIndex, setSelectedTabIndex) = remember(tabs) { mutableIntStateOf(0) }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> viewModel.setSelectedImageUri(uri) }
+
 
     LaunchedEffect(Unit) {
         viewModel.loadStyles()
@@ -75,36 +72,11 @@ fun MainScreen(
             shape = RoundedCornerShape(16.dp)
         )
 
-        // Chọn ảnh
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(380.dp)
-                .padding(vertical = 16.dp)
-                .border(2.dp, Color(0xFFE040FB), RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { launcher.launch("image/*") },
-            contentAlignment = Alignment.Center
-        ) {
-            if (selectedImageUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.AccountBox,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = Color(0xFFBDBDBD)
-                    )
-                    Text("Add your photo", color = Color(0xFFBDBDBD))
-                }
-            }
-        }
+        // Chọn ảnh với PhotoPicker
+        PhotoPicker(
+            selectedImageUri = selectedImageUri,
+            onImageSelected = { uri -> viewModel.setSelectedImageUri(uri) }
+        )
 
         // Style Tabs
         Text(
