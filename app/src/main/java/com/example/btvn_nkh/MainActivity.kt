@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.btvn_nkh.ui.MainScreen
-import com.example.btvn_nkh.ui.MainScreenViewModel
 import com.example.btvn_nkh.ui.theme.BTVN_NKHTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -20,12 +23,22 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BTVN_NKHTheme {
+                val navController = rememberNavController()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val viewModel: MainScreenViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    MainScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        viewModel = viewModel
-                    )
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main"
+                    ) {
+                        composable("main") {
+                            val viewModel = hiltViewModel<com.example.btvn_nkh.ui.MainScreenViewModel>()
+                            MainScreen(
+                                modifier = Modifier.padding(innerPadding),
+                                viewModel = viewModel,
+                                navController = navController
+                            )
+                        }
+
+                    }
                 }
             }
         }

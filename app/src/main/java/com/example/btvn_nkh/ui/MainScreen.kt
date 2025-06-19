@@ -1,7 +1,6 @@
 // File: MainScreen.kt
 package com.example.btvn_nkh.ui
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,9 +12,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,35 +20,36 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.btvn_nkh.ui.components.PhotoPicker
 
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainScreenViewModel
+    viewModel: MainScreenViewModel,
+    navController: NavController
 ) {
-    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
     val tabs by viewModel.tabs.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     val (selectedTabIndex, setSelectedTabIndex) = remember(tabs) { mutableIntStateOf(0) }
-
-
+    val (selectedStyleId, setSelectedStyleId) = remember { mutableStateOf<String?>(null) }
+    var prompt by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.loadStyles()
     }
+
+
 
     Column(
         modifier = modifier
@@ -60,10 +58,34 @@ fun MainScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Prompt
+        errorMessage?.let { error ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = error,
+                        color = Color(0xFFD32F2F),
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { viewModel.clearError() }) {
+                        Text("×", fontSize = 20.sp, color = Color(0xFFD32F2F))
+                    }
+                }
+            }
+        }
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = prompt,
+            onValueChange = { prompt = it },
             placeholder = { Text("Enter your prompt…") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -71,14 +93,27 @@ fun MainScreen(
                 .border(2.dp, Color(0xFFE040FB), RoundedCornerShape(16.dp)),
             shape = RoundedCornerShape(16.dp)
         )
-
-        // Chọn ảnh với PhotoPicker
-        PhotoPicker(
-            selectedImageUri = selectedImageUri,
-            onImageSelected = { uri -> viewModel.setSelectedImageUri(uri) }
-        )
-
-        // Style Tabs
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(380.dp)
+                .padding(vertical = 16.dp)
+                .border(2.dp, Color(0xFFE040FB), RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.AccountBox,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = Color(0xFFBDBDBD)
+                )
+                Text("Add your photo", color = Color(0xFFBDBDBD))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Photo picker coming in Phase 2", color = Color(0xFFBDBDBD))
+            }
+        }
         Text(
             "Choose your Style",
             modifier = Modifier.align(Alignment.Start),
@@ -118,14 +153,15 @@ fun MainScreen(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            // Style Items
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(tabs[selectedTabIndex].styles) { style ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(80.dp)
+                        modifier = Modifier
+                            .width(80.dp)
+                            .clickable { setSelectedStyleId(style._id) }
                     ) {
                         Image(
                             painter = rememberAsyncImagePainter(style.key),
@@ -134,7 +170,13 @@ fun MainScreen(
                                 .size(80.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color.White)
-                                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                                .border(
+                                    width = if (selectedStyleId == style._id) 3.dp else 1.dp,
+                                    color = if (selectedStyleId == style._id) Color(0xFFE040FB) else Color(
+                                        0xFFE0E0E0
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
                                 .shadow(8.dp, RoundedCornerShape(12.dp))
                         )
                         Spacer(Modifier.height(8.dp))
@@ -151,21 +193,19 @@ fun MainScreen(
                 }
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-        Box(
+        Button(
+            onClick = { },
+            enabled = false,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        listOf(Color(0xFFEC63FF), Color(0xFF7C79FF))
-                    )
-                ),
-            contentAlignment = Alignment.Center
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFCCCCCC)
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Generate AI", color = Color.White)
+            Text("Generate AI Art", color = Color.White)
         }
     }
 }
