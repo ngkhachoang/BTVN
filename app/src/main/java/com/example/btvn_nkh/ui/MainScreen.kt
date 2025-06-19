@@ -43,8 +43,6 @@ fun MainScreen(
     val selectedImageUri by viewModel.selectedImageUri.collectAsState()
     val tabs by viewModel.tabs.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val isAuthenticating by viewModel.isAuthenticating.collectAsState()
-    val authenticationStatus by viewModel.authenticationStatus.collectAsState()
     val isGenerating by viewModel.isGenerating.collectAsState()
     val generatedImageUrl by viewModel.generatedImageUrl.collectAsState()
     val (selectedTabIndex, setSelectedTabIndex) = remember(tabs) { mutableIntStateOf(0) }
@@ -96,31 +94,7 @@ fun MainScreen(
             }
         }
 
-        authenticationStatus?.let { status ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = status,
-                        color = Color(0xFF2E7D32),
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = { viewModel.clearAuthStatus() }) {
-                        Text("×", fontSize = 20.sp, color = Color(0xFF2E7D32))
-                    }
-                }
-            }
-        }
+
         OutlinedTextField(
             value = prompt,
             onValueChange = { prompt = it },
@@ -216,56 +190,31 @@ fun MainScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Button(
+            onClick = {
+                viewModel.generateAiArt(selectedStyleId, prompt)
+            },
+            enabled = selectedImageUri != null && !isGenerating,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (selectedImageUri != null && !isGenerating) Color(0xFFE040FB) else Color(
+                    0xFFCCCCCC
+                )
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Button(
-                onClick = { viewModel.testAuthentication() },
-                enabled = !isAuthenticating,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2196F3)
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                if (isAuthenticating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Test Auth", color = Color.White)
-                }
-            }
-
-            Button(
-                onClick = {
-                    viewModel.generateAiArt(selectedStyleId, prompt)
-                },
-                enabled = selectedImageUri != null && !isGenerating,
-                modifier = Modifier
-                    .weight(2f)
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedImageUri != null && !isGenerating) Color(0xFFE040FB) else Color(0xFFCCCCCC)
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                if (isGenerating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Generating...", color = Color.White)
-                } else {
-                    Text("Generate AI Art", color = Color.White)
-                }
+            if (isGenerating) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Generating...", color = Color.White)
+            } else {
+                Text("Generate AI Art", color = Color.White)
             }
         }
     }
