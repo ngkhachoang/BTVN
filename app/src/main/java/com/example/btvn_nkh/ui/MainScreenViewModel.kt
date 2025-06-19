@@ -3,6 +3,9 @@ package com.example.btvn_nkh.ui
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.btvn_nkh.ai_art.exception.AiArtException
+import com.example.btvn_nkh.ai_art.models.AiArtParams
+import com.example.btvn_nkh.ai_art.usecase.AiArtUseCase
 import com.example.btvn_nkh.data.model.StyleTabDto
 import com.example.btvn_nkh.data.repository.StyleRepository
 import com.example.btvn_nkh.network.SignatureRepository
@@ -15,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainScreenViewModel @Inject constructor(
     private val repository: StyleRepository,
-    private val signatureRepository: SignatureRepository
+    private val signatureRepository: SignatureRepository,
+    private val aiArtUseCase: AiArtUseCase
 ) : ViewModel() {
 
     private val _selectedImageUri = MutableStateFlow<Uri?>(null)
@@ -33,6 +37,12 @@ class MainScreenViewModel @Inject constructor(
     private val _authenticationStatus = MutableStateFlow<String?>(null)
     val authenticationStatus: StateFlow<String?> = _authenticationStatus
 
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating
+
+    private val _generatedImageUrl = MutableStateFlow<String?>(null)
+    val generatedImageUrl: StateFlow<String?> = _generatedImageUrl
+
     fun loadStyles() {
         viewModelScope.launch {
             try {
@@ -47,6 +57,7 @@ class MainScreenViewModel @Inject constructor(
     fun setSelectedImageUri(uri: Uri?) {
         _selectedImageUri.value = uri
         _errorMessage.value = null
+        _generatedImageUrl.value = null
     }
 
     fun clearError() {
@@ -55,6 +66,51 @@ class MainScreenViewModel @Inject constructor(
 
     fun clearAuthStatus() {
         _authenticationStatus.value = null
+    }
+
+    fun generateAiArt(
+        styleId: String? = null,
+        positivePrompt: String? = null,
+        negativePrompt: String? = null
+    ) {
+        val imageUri = _selectedImageUri.value
+        if (imageUri == null) {
+            _errorMessage.value = "Please select an image first"
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _isGenerating.value = true
+                _errorMessage.value = null
+                _generatedImageUrl.value = null
+
+                val params = AiArtParams(
+                    imageUri = imageUri,
+                    styleId = styleId,
+                    positivePrompt = positivePrompt,
+                    negativePrompt = negativePrompt
+                )
+
+                val result = aiArtUseCase.generateAiArt(params)
+                result.fold(
+                    onSuccess = { imageUrl: String ->
+                        _generatedImageUrl.value = imageUrl
+                    },
+                    onFailure = { exception: Throwable ->
+                        val errorMsg = when (exception) {
+                            is AiArtException -> exception.errorReason.name
+                            else -> exception.message ?: "Unknown error occurred"
+                        }
+                        _errorMessage.value = errorMsg
+                    }
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to generate AI art: ${e.message}"
+            } finally {
+                _isGenerating.value = false
+            }
+        }
     }
 
     fun testAuthentication() {

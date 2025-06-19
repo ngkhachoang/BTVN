@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.btvn_nkh.ui.MainScreen
+import com.example.btvn_nkh.ui.TempResultScreen
 import com.example.btvn_nkh.ui.theme.BTVN_NKHTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,7 +40,13 @@ class MainActivity : ComponentActivity() {
                                 navController = navController
                             )
                         }
-
+                        composable(
+                            "result?url={url}",
+                            arguments = listOf(navArgument("url") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val url = backStackEntry.arguments?.getString("url") ?: ""
+                            TempResultScreen(imageUrl = url, navController = navController)
+                        }
                     }
                 }
             }

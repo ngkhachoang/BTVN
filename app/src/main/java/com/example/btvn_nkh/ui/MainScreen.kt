@@ -1,6 +1,8 @@
 // File: MainScreen.kt
 package com.example.btvn_nkh.ui
 
+import android.net.Uri
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,12 +45,20 @@ fun MainScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val isAuthenticating by viewModel.isAuthenticating.collectAsState()
     val authenticationStatus by viewModel.authenticationStatus.collectAsState()
+    val isGenerating by viewModel.isGenerating.collectAsState()
+    val generatedImageUrl by viewModel.generatedImageUrl.collectAsState()
     val (selectedTabIndex, setSelectedTabIndex) = remember(tabs) { mutableIntStateOf(0) }
     val (selectedStyleId, setSelectedStyleId) = remember { mutableStateOf<String?>(null) }
     var prompt by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.loadStyles()
+    }
+
+    LaunchedEffect(generatedImageUrl) {
+        generatedImageUrl?.let { url ->
+            navController.navigate("result?url=${Uri.encode(url)}")
+        }
     }
 
 
@@ -233,19 +243,29 @@ fun MainScreen(
             }
 
             Button(
-                onClick = { },
-                enabled = selectedImageUri != null,
+                onClick = {
+                    viewModel.generateAiArt(selectedStyleId, prompt)
+                },
+                enabled = selectedImageUri != null && !isGenerating,
                 modifier = Modifier
                     .weight(2f)
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedImageUri != null) Color(0xFFE040FB) else Color(
-                        0xFFCCCCCC
-                    )
+                    containerColor = if (selectedImageUri != null && !isGenerating) Color(0xFFE040FB) else Color(0xFFCCCCCC)
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Generate AI Art", color = Color.White)
+                if (isGenerating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Generating...", color = Color.White)
+                } else {
+                    Text("Generate AI Art", color = Color.White)
+                }
             }
         }
     }
