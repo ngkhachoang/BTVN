@@ -2,6 +2,12 @@ package com.example.btvn_nkh.di
 
 import android.content.ContentResolver
 import android.content.Context
+import com.example.btvn_nkh.ai_art.network.AiArtApiService
+import com.example.btvn_nkh.ai_art.network.ArtGenerationService
+import com.example.btvn_nkh.ai_art.network.ImageUploadManager
+import com.example.btvn_nkh.ai_art.processing.ImageProcessor
+import com.example.btvn_nkh.ai_art.storage.FileManager
+import com.example.btvn_nkh.ai_art.usecase.AiArtUseCase
 import com.example.btvn_nkh.data.api.StyleApiService
 import com.example.btvn_nkh.data.repository.StyleRepository
 import com.example.btvn_nkh.network.SignatureApiService
@@ -58,4 +64,38 @@ object AppModule {
     @Singleton
     fun provideSignatureRepository(signatureApiService: SignatureApiService): SignatureRepository =
         SignatureRepository(signatureApiService)
+
+    @Provides
+    @Singleton
+    fun provideAiArtApiService(@Named("signature") retrofit: Retrofit): AiArtApiService =
+        retrofit.create(AiArtApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideImageProcessor(@ApplicationContext context: Context): ImageProcessor =
+        ImageProcessor(context)
+
+    @Provides
+    @Singleton
+    fun provideImageUploadManager(aiArtApiService: AiArtApiService): ImageUploadManager =
+        ImageUploadManager(aiArtApiService)
+
+    @Provides
+    @Singleton
+    fun provideArtGenerationService(aiArtApiService: AiArtApiService): ArtGenerationService =
+        ArtGenerationService(aiArtApiService)
+
+    @Provides
+    @Singleton
+    fun provideFileManager(): FileManager = FileManager()
+
+    @Provides
+    @Singleton
+    fun provideAiArtUseCase(
+        imageProcessor: ImageProcessor,
+        imageUploadManager: ImageUploadManager,
+        artGenerationService: ArtGenerationService,
+        fileManager: FileManager
+    ): AiArtUseCase =
+        AiArtUseCase(imageProcessor, imageUploadManager, artGenerationService, fileManager)
 } 
