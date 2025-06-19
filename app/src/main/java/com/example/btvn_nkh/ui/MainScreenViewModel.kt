@@ -1,5 +1,6 @@
 package com.example.btvn_nkh.ui
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.btvn_nkh.data.model.StyleTabDto
@@ -14,6 +15,9 @@ import javax.inject.Inject
 class MainScreenViewModel @Inject constructor(
     private val repository: StyleRepository
 ) : ViewModel() {
+
+    private val _selectedImageUri = MutableStateFlow<Uri?>(null)
+    val selectedImageUri: StateFlow<Uri?> = _selectedImageUri
 
     private val _tabs = MutableStateFlow<List<StyleTabDto>>(emptyList())
     val tabs: StateFlow<List<StyleTabDto>> = _tabs
@@ -30,6 +34,11 @@ class MainScreenViewModel @Inject constructor(
                 _errorMessage.value = "Failed to load styles: ${e.message}"
             }
         }
+    }
+
+    fun setSelectedImageUri(uri: Uri?) {
+        _selectedImageUri.value = uri
+        _errorMessage.value = null
     }
 
     fun clearError() {

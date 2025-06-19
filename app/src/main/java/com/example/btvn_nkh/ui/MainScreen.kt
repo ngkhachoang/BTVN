@@ -10,8 +10,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.btvn_nkh.ui.components.PhotoPicker
 
 @Composable
 fun MainScreen(
@@ -39,6 +38,7 @@ fun MainScreen(
     viewModel: MainScreenViewModel,
     navController: NavController
 ) {
+    val selectedImageUri by viewModel.selectedImageUri.collectAsState()
     val tabs by viewModel.tabs.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val (selectedTabIndex, setSelectedTabIndex) = remember(tabs) { mutableIntStateOf(0) }
@@ -93,27 +93,10 @@ fun MainScreen(
                 .border(2.dp, Color(0xFFE040FB), RoundedCornerShape(16.dp)),
             shape = RoundedCornerShape(16.dp)
         )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(380.dp)
-                .padding(vertical = 16.dp)
-                .border(2.dp, Color(0xFFE040FB), RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Default.AccountBox,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = Color(0xFFBDBDBD)
-                )
-                Text("Add your photo", color = Color(0xFFBDBDBD))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Photo picker coming in Phase 2", color = Color(0xFFBDBDBD))
-            }
-        }
+        PhotoPicker(
+            selectedImageUri = selectedImageUri,
+            onImageSelected = { uri -> viewModel.setSelectedImageUri(uri) }
+        )
         Text(
             "Choose your Style",
             modifier = Modifier.align(Alignment.Start),
@@ -196,12 +179,14 @@ fun MainScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = { },
-            enabled = false,
+            enabled = selectedImageUri != null,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFCCCCCC)
+                containerColor = if (selectedImageUri != null) Color(0xFFE040FB) else Color(
+                    0xFFCCCCCC
+                )
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
