@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">BTVN_NKH</string>
+    <string name="network_error">Network error occurred</string>
+    <string name="internal_error">Internal error occurred</string>
+    <string name="unknown_error">Unknown error occurred</string>
+    <string name="image_type_invalid">Invalid image type. Please select JPEG image</string>
+    <string name="generate_image_error">Failed to generate image</string>
 </resources>
